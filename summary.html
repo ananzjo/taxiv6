@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الخلاصة الذكي v2.3.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --taxi: #f1c40f; --success: #27ae60; --danger: #e74c3c; --dark: #222; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .report-page { max-width: 1150px; margin: auto; background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #000; }
+        
+        #toastBox { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #333; color: white; padding: 12px 25px; border-radius: 10px; display: flex; align-items: center; gap: 15px; animation: slideDown 0.3s ease; font-weight: bold; border-right: 6px solid var(--taxi); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .toast.success { border-right-color: var(--success); }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .filters-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #fafafa; padding: 20px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 25px; }
+        .filters-area label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; }
+        select { width: 100%; padding: 10px; border: 2px solid #ccc; border-radius: 8px; font-family: 'Tajawal'; transition: 0.3s; cursor: pointer; }
+
+        .summary-wrapper { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+        .summary-card { flex: 1; border: 3px solid #000; border-radius: 20px; padding: 20px; text-align: center; background: #fff; }
+        .summary-card .amount { font-size: 2.5rem; font-weight: bold; display: block; margin: 10px 0; }
+        .summary-card.net { border-color: var(--danger); color: var(--danger); }
+
+        .main-table { width: 100%; border-collapse: collapse; border: 3px solid #000; margin-bottom: 20px; }
+        .main-table th { background: #222; color: #fff; padding: 15px; border: 1px solid #000; }
+        .main-table td { padding: 12px; text-align: center; font-weight: bold; border: 1px solid #000; }
+        .main-table tr:nth-child(even) { background: #f9f9f9; }
+
+        .btn { padding: 14px 28px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 10px; transition: 0.3s; justify-content: center; }
+        .btn-refresh { background: var(--success); color: white; }
+        .btn-pdf { background: var(--danger); color: white; }
+        .spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+
+<div id="toastBox"></div>
+
+<div class="report-page" id="printableArea">
+    <div style="text-align: center; border-bottom: 4px solid var(--taxi); margin-bottom: 25px; padding-bottom: 10px;">
+        <h1>خلاصة الحسابات الشهرية - v2.3.1</h1>
+        <p style="font-weight: bold; color: #555;">فلترة ذكية مع خاصية الحفاظ على الاختيارات</p>
+    </div>
+
+    <div class="filters-area no-print">
+        <div>
+            <label>📅 اختر الشهر والسنة</label>
+            <select id="monthFilter" onchange="applyFilters()"></select>
+        </div>
+        <div>
+            <label>👤 المالك</label>
+            <select id="ownerFilter" onchange="applyFilters()"><option value="all">كل الملاك</option></select>
+        </div>
+        <div>
+            <label>👮 المسؤول</label>
+            <select id="inChargeFilter" onchange="applyFilters()"><option value="all">كل المسؤولين</option></select>
+        </div>
+        <div style="display: flex; align-items: flex-end;">
+            <button id="refreshBtn" class="btn btn-refresh" onclick="fetchAndCalculate()" style="width: 100%;">
+                <div class="spinner" id="spinRef"></div>
+                <span id="txtRef">تحديث البيانات</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="summary-wrapper">
+        <div class="summary-card"><h4>إجمالي تحصيل الشهر</h4><span class="amount" id="totalActual">0.00</span><small>دينار أردني</small></div>
+        <div class="summary-card net"><h4>صافي المبلغ المتبقي</h4><span class="amount" id="netProfit">0.00</span><small>بعد المصاريف</small></div>
+    </div>
+
+    <table class="main-table">
+        <thead><tr><th>#</th><th>رقم السيارة</th><th>الضمان اليومي</th><th>المتوقع</th><th>الفعلي (الشهر)</th><th>المصاريف</th></tr></thead>
+        <tbody id="tableContent"></tbody>
+    </table>
+
+    <div class="no-print"><button class="btn btn-pdf" onclick="exportPDF()">تصدير تقرير PDF 📄</button></div>
+</div>
+
+<script>
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbxXl_1lmAK1HRSemLmW1z9XDPcOPqu8hmKEtaPFRYG8qtmbgKraI-a9ADW0R_EObuel/exec";
+    let masterData = { cars: [], revenues: [], expenses: [] };
+
+    function showToast(msg, type = 'success') {
+        const box = document.getElementById('toastBox');
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerHTML = `<span>${type === 'success' ? '✔️' : '❌'}</span> <span>${msg}</span>`;
+        box.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 4000);
+    }
+
+    function generateMonthOptions() {
+        const select = document.getElementById('monthFilter');
+        const now = new Date();
+        for (let i = 0; i < 12; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthLabel = d.toLocaleString('ar-EG', { month: 'long', year: 'numeric' });
+            const monthVal = `${d.getFullYear()}-${d.getMonth() + 1}`;
+            select.innerHTML += `<option value="${monthVal}">${monthLabel}</option>`;
+        }
+    }
+
+    async function fetchAndCalculate() {
+        const btn = document.getElementById('refreshBtn');
+        const spin = document.getElementById('spinRef');
+        const txt = document.getElementById('txtRef');
+
+        // 1. حفظ الاختيارات الحالية
+        const savedOwner = document.getElementById('ownerFilter').value;
+        const savedInCharge = document.getElementById('inChargeFilter').value;
+
+        btn.disabled = true; spin.style.display = 'inline-block';
+        txt.innerText = "جاري المزامنة...";
+        showToast("جاري جلب البيانات مع حفظ فلاتر البحث...");
+
+        try {
+            const [carsRes, revRes, expRes] = await Promise.all([
+                fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'fetchTable', sheetName: 'Cars' }) }),
+                fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'fetchTable', sheetName: 'Revenues' }) }),
+                fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'fetchTable', sheetName: 'Expenses' }) })
+            ]);
+            masterData.cars = (await carsRes.json()).rows;
+            masterData.revenues = (await revRes.json()).rows;
+            masterData.expenses = (await expRes.json()).rows;
+            
+            // 2. تحديث القوائم وإعادة تعيين القيم المحفوظة
+            populateFilters(savedOwner, savedInCharge);
+            applyFilters();
+            showToast("تم تحديث البيانات بنجاح", "success");
+        } catch (e) { showToast("فشل جلب البيانات", "error"); }
+        finally { btn.disabled = false; spin.style.display = 'none'; txt.innerText = "تحديث البيانات"; }
+    }
+
+    function populateFilters(savedOwner = 'all', savedInCharge = 'all') {
+        const owners = [...new Set(masterData.cars.map(c => String(c[2] || "").trim()))].filter(x => x);
+        const inCharges = [...new Set(masterData.cars.map(c => String(c[3] || "").trim()))].filter(x => x);
+
+        const oFilter = document.getElementById('ownerFilter');
+        const iFilter = document.getElementById('inChargeFilter');
+
+        oFilter.innerHTML = '<option value="all">كل الملاك</option>' + owners.map(o => `<option value="${o}">${o}</option>`).join('');
+        iFilter.innerHTML = '<option value="all">كل المسؤولين</option>' + inCharges.map(i => `<option value="${i}">${i}</option>`).join('');
+
+        // 3. إعادة الاختيار التلقائي للمالك والمسؤول
+        if (owners.includes(savedOwner)) oFilter.value = savedOwner;
+        if (inCharges.includes(savedInCharge)) iFilter.value = savedInCharge;
+    }
+
+    function applyFilters() {
+        const selMonthVal = document.getElementById('monthFilter').value;
+        const [selYear, selMonth] = selMonthVal.split('-').map(Number);
+        const selOwner = document.getElementById('ownerFilter').value.trim();
+        const selInCharge = document.getElementById('inChargeFilter').value.trim();
+
+        let rowsHtml = ""; let gActual = 0; let gExpenses = 0; let counter = 0;
+
+        masterData.cars.forEach((car) => {
+            const plate = String(car[1] || "").trim();
+            const owner = String(car[2] || "").trim();
+            const inCharge = String(car[3] || "").trim();
+            const dailyRent = parseFloat(car[7]) || 0;
+
+            if ((selOwner === 'all' || owner === selOwner) && (selInCharge === 'all' || inCharge === selInCharge)) {
+                
+                const carRev = masterData.revenues.filter(r => {
+                    const rDate = r[1] ? new Date(r[1]) : null;
+                    const isSameMonth = rDate && (rDate.getMonth() + 1 === selMonth) && (rDate.getFullYear() === selYear);
+                    return String(r[2] || "").trim() === plate && isSameMonth;
+                }).reduce((s, r) => s + (parseFloat(r[5]) || 0), 0);
+
+                const carExp = masterData.expenses.filter(e => {
+                    const eDate = e[1] ? new Date(e[1]) : null;
+                    const isSameMonth = eDate && (eDate.getMonth() + 1 === selMonth) && (eDate.getFullYear() === selYear);
+                    return String(e[2] || "").trim() === plate && isSameMonth;
+                }).reduce((s, e) => s + (parseFloat(e[6]) || 0), 0);
+                
+                gActual += carRev; gExpenses += carExp; counter++;
+                rowsHtml += `<tr><td>${counter}</td><td>${plate}</td><td>${dailyRent.toFixed(2)}</td><td>${(30*dailyRent).toFixed(2)}</td><td>${carRev.toFixed(2)}</td><td>${carExp.toFixed(2)}</td></tr>`;
+            }
+        });
+
+        document.getElementById('tableContent').innerHTML = rowsHtml || '<tr><td colspan="6">لا توجد عمليات لهذا الشهر</td></tr>';
+        document.getElementById('totalActual').innerText = gActual.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('netProfit').innerText = (gActual - gExpenses).toLocaleString('en-US', {minimumFractionDigits: 2});
+        
+        if(counter > 0) showToast(`تم العثور على ${counter} مركبة لهذا الفلتر`, "success");
+    }
+
+    function exportPDF() {
+        const element = document.getElementById('printableArea');
+        html2pdf().from(element).set({ margin: 0.5, filename: 'Summary_v2.3.1.pdf', html2canvas: { scale: 2 }, jsPDF: { orientation: 'landscape' } }).save();
+    }
+
+    window.onload = () => { generateMonthOptions(); fetchAndCalculate(); };
+</script>
+</body>
+</html>
