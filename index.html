@@ -18,6 +18,45 @@
 
         body { font-family: 'Tajawal', sans-serif; background-color: var(--dark-bg); color: var(--text-main); margin: 0; padding: 0; overflow-x: hidden; }
 
+        /* --- الأزرار الحديثة المدمجة (Informative, Responsive, Modern) --- */
+        .reports-actions {
+            display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin: 25px 0;
+        }
+
+        .btn-modern {
+            display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+            padding: 12px 24px; border: none; border-radius: 12px; font-family: 'Tajawal', sans-serif;
+            font-weight: 700; font-size: 1rem; cursor: pointer; transition: var(--transition);
+            min-width: 190px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); position: relative;
+        }
+
+        .btn-download-modern {
+            background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);
+            color: #000;
+        }
+        .btn-download-modern::after {
+            content: " (Excel)"; font-size: 0.75rem; opacity: 0.7; margin-right: 5px;
+        }
+
+        .btn-pdf-modern {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            color: #fff; border: 1px solid #333;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        .btn-pdf-modern:hover {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        @media (max-width: 600px) {
+            .btn-modern { width: 100%; }
+            .reports-actions { flex-direction: column; }
+        }
+        /* --- نهاية تعديل الأزرار --- */
+
         #toast {
             position: fixed; top: 20px; right: 20px; background: #27ae60; color: white;
             padding: 15px 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -38,9 +77,9 @@
         .system-header { background: #000; padding: 20px 0; text-align: center; border-bottom: 4px solid var(--taxi-yellow); }
         .nav-tabs { background: #111; display: flex; justify-content: center; flex-wrap: wrap; padding: 20px; gap: 15px; border-bottom: 1px solid var(--border-color); }
         .tab-btn { background: #222; border: 1px solid var(--border-color); color: #888; width: 110px; height: 100px; cursor: pointer; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: var(--transition); }
-        .tab-btn.active { background: var(--taxi-yellow); color: #000; transform: scale(1.5); }
+        .tab-btn.active { background: var(--taxi-yellow); color: #000; transform: scale(1.1); }
         .tab-btn .icon { font-size: 1.8rem; }
-        .tab-btn span { font-size: 1.5rem; font-weight: bold; }
+        .tab-btn span { font-size: 0.9rem; font-weight: bold; }
 
         .container { padding: 30px; max-width: 1400px; margin: auto; animation: fadeIn 0.5s; }
         .card { background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); margin-bottom: 30px; }
@@ -127,6 +166,7 @@
     <div id="reportContainer" class="container hidden">
         <div class="card">
             <h3 style="color: var(--taxi-yellow); margin-top: 0;">لوحة التقارير والمحاسبة الذكية</h3>
+            
             <div class="report-filters" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
                 <div class="filter-item"><label>نوع التقرير</label>
                     <select id="reportType" onchange="toggleReportFilters()">
@@ -137,9 +177,17 @@
                 <div class="filter-item filter-driver hidden"><label>السائق</label><select id="filterDriverSelect"></select></div>
                 <div class="filter-item"><label>من تاريخ</label><input type="date" id="reportStartDate"></div>
                 <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="reportEndDate"></div>
-                <button class="btn-action btn-load" onclick="generateReport()">تحميل التقرير</button>
-                <button class="btn-action" style="background: #e74c3c; color: #fff;" onclick="downloadPDF()">PDF 📄</button>
             </div>
+
+            <div class="reports-actions">
+                <button class="btn-modern btn-download-modern" onclick="generateReport()">
+                    <span>📥 تحميل التقرير</span>
+                </button>
+                <button class="btn-modern btn-pdf-modern" onclick="downloadPDF()">
+                    <span>📄 تصدير PDF</span>
+                </button>
+            </div>
+            
             <div id="reportContent" style="margin-top: 25px;">
                 <div id="pdfArea" class="table-container">
                     <table id="reportTable"><thead><tr id="reportHeaders"></tr></thead><tbody id="reportTableBody"></tbody></table>
@@ -150,10 +198,10 @@
 </div>
 
 <script>
+    // الحفاظ على جميع الدوال البرمجية الأصلية دون تغيير
     const scriptUrl = "https://script.google.com/macros/s/AKfycbxXl_1lmAK1HRSemLmW1z9XDPcOPqu8hmKEtaPFRYG8qtmbgKraI-a9ADW0R_EObuel/exec";
     let loggedInUser = ""; let currentSheet = "Revenues"; let dropdowns = { cars: [], drivers: [] };
 
-    // مصفوفة الحقول النهائية المعتمدة v1.5.0
     const schema = {
         Revenues: [
             { id: 'Date', label: 'التاريخ', type: 'date' },
