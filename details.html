@@ -24,11 +24,9 @@
         .info-card.exp { color: var(--danger); border-color: var(--danger); }
         .info-card span { font-size: 1.8rem; font-weight: bold; display: block; }
         
-        /* كلاسات الصافي المالي الذكية */
         .net-positive { color: var(--success) !important; }
         .net-negative { color: var(--danger) !important; }
 
-        /* أزرار التنقل التفاعلية (3D) */
         .btn-refresh {
             background: var(--success); color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; 
             font-weight: bold; width: 100%; transition: all 0.2s ease; position: relative; top: 0;
@@ -43,7 +41,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* تنسيق الجداول الملونة */
         .table-section { background: #fff; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 2px solid; margin-bottom: 10px; }
         .section-rev { border-color: var(--success); }
         .section-exp { border-color: var(--danger); }
@@ -56,8 +53,18 @@
         th { position: sticky; top: 0; background: #f8f8f8; padding: 12px; border-bottom: 2px solid #ddd; z-index: 10; }
         td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; }
 
-        @media (max-width: 900px) { .details-container { grid-template-columns: 1fr; } .info-wrapper { flex-direction: column; } .details-container { display: block; } }
-        .details-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        /* --- تعديل الـ Responsive المطلوب --- */
+        .details-container { display: flex; flex-direction: column; gap: 20px; }
+        
+        @media (max-width: 900px) { 
+            .info-wrapper { flex-direction: column; } 
+        }
+
+        @media (min-width: 901px) {
+            .details-container { display: grid; grid-template-columns: 1fr 1fr; }
+        }
+        /* ------------------------------------- */
+
     </style>
 </head>
 <body>
