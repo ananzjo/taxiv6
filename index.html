@@ -296,26 +296,30 @@
     }
 
     async function loadTable() {
-        const l = document.getElementById('loadLoader');
-        l.style.display = "inline-block";
-        try {
-            const res = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'fetchTable', sheetName: currentSheet }) });
-            const data = await res.json();
+    const l = document.getElementById('loadLoader');
+    if(l) l.style.display = "inline-block";
+    
+    try {
+        const res = await fetch(scriptUrl, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'fetchTable', sheetName: currentSheet }) 
+        });
+        const data = await res.json();
+        
+        if (!data.rows || data.rows.length === 0) {
+            showToast("لا توجد بيانات في ورقة " + currentSheet, "error");
+            document.getElementById('tableBody').innerHTML = "<tr><td colspan='100%'>لا توجد بيانات لعرضها</td></tr>";
+        } else {
             document.getElementById('tableHeaders').innerHTML = data.headers.map(h => `<th>${h}</th>`).join('');
             document.getElementById('tableBody').innerHTML = data.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
-        } catch(e) { showToast("خطأ في التحميل", "error"); }
-        l.style.display = "none";
+            showToast("تم تحميل بيانات " + currentSheet + " بنجاح");
+        }
+    } catch(e) { 
+        showToast("فشل الاتصال بورقة " + currentSheet, "error");
+        console.error("Error Detail:", e);
     }
-
-    function showReports(btn) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('entryContainer').classList.add('hidden');
-        document.getElementById('reportContainer').classList.remove('hidden');
-        const sel = document.getElementById('filterDriverSelect');
-        sel.innerHTML = dropdowns.drivers.map(d => `<option value="${d}">${d}</option>`).join('');
-    }
-
+    if(l) l.style.display = "none";
+}
     function toggleReportFilters() {
         const isDriver = document.getElementById('reportType').value === 'driver';
         document.querySelector('.filter-driver').classList.toggle('hidden', !isDriver);
