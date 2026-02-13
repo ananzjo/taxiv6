@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سجل التفاصيل المالي v1.1.0</title>
+    <title>سجل التفاصيل المالي v1.2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --taxi: #f1c40f; --success: #27ae60; --danger: #e74c3c; --dark: #222; }
@@ -48,7 +48,7 @@
 
 <div class="details-page">
     <div class="header-section">
-        <h1>سجل التفاصيل المالي v1.1.0</h1>
+        <h1>سجل التفاصيل المالي v1.2.0</h1>
         <p>عرض تحليلي للإيرادات والمصاريف بناءً على بيانات الأعمدة (A-J)</p>
     </div>
 
@@ -61,7 +61,7 @@
 
     <div class="info-wrapper">
         <div class="info-card rev"><h3>مجموع الإيرادات</h3><span id="sumRev">0.00</span></div>
-        <div class="info-card exp"><h3>مجموع المصاريف (I)</h3><span id="sumExp">0.00</span></div>
+        <div class="info-card exp"><h3>مجموع المصاريف (H)</h3><span id="sumExp">0.00</span></div>
         <div class="info-card"><h3>الصافي المالي</h3><span id="sumNet">0.00</span></div>
     </div>
 
@@ -80,7 +80,7 @@
             <h2>🛠️ تفاصيل المصاريف (المدفوعة)</h2>
             <div class="scroll-table">
                 <table>
-                    <thead><tr><th>التاريخ</th><th>اللوحة</th><th>المبلغ (I)</th><th>النوع والملاحظات (H+J)</th></tr></thead>
+                    <thead><tr><th>التاريخ</th><th>اللوحة</th><th>المبلغ (H)</th><th>النوع والملاحظات</th></tr></thead>
                     <tbody id="expDetails"></tbody>
                 </table>
             </div>
@@ -149,33 +149,34 @@
         const selO = document.getElementById('ownerFilter').value;
         const selI = document.getElementById('inChargeFilter').value;
 
-        // 1. تحديد اللوحات بناءً على المالك والمسؤول (شيت Cars)
         const activePlates = masterData.cars.filter(car => {
             const matchO = (selO === 'all' || String(car[2]).trim() === selO);
             const matchI = (selI === 'all' || String(car[3]).trim() === selI);
             return matchO && matchI;
         }).map(car => String(car[1]).trim());
 
-        // 2. معالجة الإيرادات
+        // 1. معالجة الإيرادات
         let rHtml = ""; let rSum = 0;
         masterData.revenues.forEach(r => {
-            const d = new Date(r[1]); // DATE (B)
-            const p = String(r[2]).trim(); // Car_No (C)
+            const d = new Date(r[1]); 
+            const p = String(r[2]).trim();
             if(activePlates.includes(p) && (d.getMonth()+1 === m) && (d.getFullYear() === y)) {
                 const amt = parseFloat(r[5]) || 0; rSum += amt;
                 rHtml += `<tr><td>${d.toLocaleDateString('en-GB')}</td><td>${p}</td><td>${amt.toFixed(2)}</td><td>${r[4]||'-'}</td></tr>`;
             }
         });
 
-        // 3. معالجة المصاريف (بناءً على التقسيم الجديد I, H, J)
+        // 2. معالجة المصاريف (المعدلة للعمود H)
         let eHtml = ""; let eSum = 0;
         masterData.expenses.forEach(e => {
-            const d = new Date(e[1]);    // DATE (B)
-            const p = String(e[2]).trim(); // Car_No (C)
+            const d = new Date(e[1]);    // DATE (B) -> Index 1
+            const p = String(e[2]).trim(); // Car_No (C) -> Index 2
             
             if(activePlates.includes(p) && (d.getMonth()+1 === m) && (d.getFullYear() === y)) {
-                const amt = parseFloat(e[8]) || 0; // Amount (I) -> Index 8
-                const type = e[7] || "-";          // Expense_Type (H) -> Index 7
+                // تعديل: المبلغ من العمود H (Index 7)
+                const amt = parseFloat(e[7]) || 0; 
+                // نوع المصروف أو المستخدم من العمود G/F للملاحظة
+                const type = e[6] || "-";          
                 const note = e[9] || "";           // Notes (J) -> Index 9
                 eSum += amt;
                 eHtml += `<tr>
