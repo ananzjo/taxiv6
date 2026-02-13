@@ -73,6 +73,131 @@
     <h1>نظام إدارة التاكسي</h1>
     <div class="version-tag">v1.5.0</div>
     <input type="text" id="username" class="login-field" placeholder="اسم المستخدم">
+    <div class="pass-wrapper">
+        <input type="password" id="password" class="login-field" placeholder="كلمة المرور">
+        <span class="eye-icon" id="eyeToggle" onclick="togglePass()">👁️</span>
+    </div>
+    <div class="remember-wrap">
+        <input type="checkbox" id="rememberMe"> <label for="rememberMe">تذكر بياناتي</label>
+    </div>
+    <button class="btn-action" style="width: 100%; background: var(--taxi-yellow); color: #000;" id="loginBtn" onclick="login()">
+        <span class="loader" id="loginLoader"></span> <span>دخول للنظام</span>
+    </button>
+</div>
+
+<div id="mainSection" class="hidden">
+    <div class="system-header"><h1>نظام إدارة التاكسي الذكي <span style="font-size: 0.8em; opacity:0.7">V1.5.0</span></h1></div>
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="showTab('Revenues', this)"><span class="icon">💰</span><span>الإيرادات</span></button>
+        <button class="tab-btn" onclick="showTab('Expenses', this)"><span class="icon">💸</span><span>المصاريف</span></button>
+        <button class="tab-btn" onclick="showTab('Drivers', this)"><span class="icon">👨‍✈️</span><span>السائقين</span></button>
+        <button class="tab-btn" onclick="showTab('Cars', this)"><span class="icon">🚗</span><span>السيارات</span></button>
+        <button class="tab-btn" onclick="showTab('Drivers_Log', this)"><span class="icon">🔑</span><span>السجل</span></button>
+        <button class="tab-btn" onclick="showTab('Discounts', this)"><span class="icon">📉</span><span>الخصومات</span></button>
+        <button class="tab-btn" onclick="showReports(this)" style="border-color: var(--taxi-yellow);"><span class="icon">📊</span><span>التقارير</span></button>
+    </div>
+
+    <div id="entryContainer" class="container">
+        <div class="card">
+            <h3 id="formTitle" style="color: var(--taxi-yellow); margin-top: 0; border-right: 5px solid var(--taxi-yellow); padding-right: 15px;"></h3>
+            <form id="dynamicForm">
+                <input type="hidden" id="ID">
+                <div id="fieldsArea" class="form-grid"></div>
+                <div style="margin-top: 35px; display: flex; gap: 15px;">
+                    <button type="button" id="submitBtn" class="btn-action btn-save" onclick="handleSubmit()">
+                        <span class="loader" id="submitLoader"></span> <span>حفظ السجل</span>
+                    </button>
+                    <button type="button" class="btn-action" style="background: #444; color: #fff;" onclick="resetForm()">إلغاء</button>
+                </div>
+            </form>
+        </div>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin:0">📊 قاعدة البيانات</h3>
+                <button class="btn-action btn-load" id="loadBtn" onclick="loadTable()">
+                    <span class="loader" id="loadLoader"></span> <span>تحميل البيانات</span>
+                </button>
+            </div>
+            <div class="table-container">
+                <table><thead><tr id="tableHeaders"></tr></thead><tbody id="tableBody"></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportContainer" class="container hidden">
+        <div class="card">
+            <h3 style="color: var(--taxi-yellow); margin-top: 0;">لوحة التقارير والمحاسبة الذكية</h3>
+            <div class="report-filters" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
+                <div class="filter-item"><label>نوع التقرير</label>
+                    <select id="reportType" onchange="toggleReportFilters()">
+                        <option value="financial">إجمالي مالي</option>
+                        <option value="driver">ذمة سائق تفصيلية</option>
+                    </select>
+                </div>
+                <div class="filter-item filter-driver hidden"><label>السائق</label><select id="filterDriverSelect"></select></div>
+                <div class="filter-item"><label>من تاريخ</label><input type="date" id="reportStartDate"></div>
+                <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="reportEndDate"></div>
+                <button class="btn-action btn-load" onclick="generateReport()">تحميل التقرير</button>
+                <button class="btn-action" style="background: #e74c3c; color: #fff;" onclick="downloadPDF()">PDF 📄</button>
+            </div>
+            <div id="reportContent" style="margin-top: 25px;">
+                <div id="pdfArea" class="table-container">
+                    <table id="reportTable"><thead><tr id="reportHeaders"></tr></thead><tbody id="reportTableBody"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbxXl_1lmAK1HRSemLmW1z9XDPcOPqu8hmKEtaPFRYG8qtmbgKraI-a9ADW0R_EObuel/exec";
+    let loggedInUser = ""; let currentSheet = "Revenues"; let dropdowns = { cars: [], drivers: [] };
+
+    // مصفوفة الحقول النهائية المعتمدة v1.5.0
+    const schema = {
+        Revenues: [
+            { id: 'Date', label: 'التاريخ', type: 'date' },
+            { id: 'Car_No', label: 'رقم السيارة', type: 'select', options: 'cars' },
+            { id: 'Driver_name', label: 'اسم السائق', type: 'select', options: 'drivers' },
+            { id: 'Category', label: 'الفئة', type: 'select', values: ['ضمان', 'مخالفات', 'أخرى'] },
+            { id: 'Amount', label: 'المبلغ', type: 'number' },
+            { id: 'Method', label: 'طريقة الدفع', type: 'select', values: ['Cash', 'Cliq', 'Transfer', 'Bank'] },
+            { id: 'Notes', label: 'ملاحظات', type: 'textarea' }
+        ],
+        Expenses: [
+            { id: 'DATE', label: 'التاريخ', type: 'date' },
+            { id: 'Car_No', label: 'رقم السيارة', type: 'select', options: 'cars' },
+            { id: 'Driver_name', label: 'اسم السائق', type: 'select', options: 'drivers' },
+            { id: 'Seller', label: 'المورد / البائع', type: 'text' },
+            { id: 'Expense_Type', label: 'نوع المصروف', type: 'text' },
+            { id: 'Amount', label: 'المبلغ', type: 'number' },
+            { id: 'Notes', label: 'ملاحظات', type: 'textarea' }
+        ],
+        Drivers: [
+            { id: 'Name', label: 'اسم السائق الكامل', type: 'text' },
+            { id: 'National_No', label: 'الرقم الوطني', type: 'number' },
+            { id: 'Mobile', label: 'رقم الموبايل', type: 'number' },
+            { id: 'Address', label: 'العنوان', type: 'text' },
+            { id: 'Location', label: 'رابط الموقع (URL)', type: 'text' }
+        ],
+        Cars: [
+            { id: 'Plate_No', label: 'رقم اللوحة', type: 'text' },
+            { id: 'Owner', label: 'المالك', type: 'text' },
+            { id: 'Brand', label: 'النوع (Brand)', type: 'text' },
+            { id: 'Model', label: 'الموديل (سنة)', type: 'text' },
+            { id: 'License_Expiry_date', label: 'انتهاء الترخيص', type: 'date' },
+            { id: 'Daily_Rent', label: 'الضمان المرجعي', type: 'number' },
+            { id: 'Fuel_Type', label: 'نوع الوقود', type: 'select', values: ['Hybrid', 'Gasoline', 'Electric'] },
+            { id: 'Office', label: 'المكتب', type: 'text' }
+        ],
+        Drivers_Log: [
+            { id: 'Date', label: 'تاريخ الحركة', type: 'date' },
+            { id: 'Time', label: 'الوقت', type: 'time' },
+            { id: 'Car_No', label: 'رقم السيارة', type: 'select', options: 'cars' },
+            { id: 'Driver_name', label: 'اسم السائق', type: 'select', options: 'drivers' },
+            { id: 'Movement_Type', label: 'نوع الحركة', type: 'select', values: ['استلام', 'تسليم'] },
+            { id: 'Odometer', label: 'قراءة العداد', type: 'number' },
+            { id: 'Cleanliness', label: 'نظافة السيارة', type: 'text' },
             { id: 'Status_Notes', label: 'حالة السيارة', type: 'textarea' },
             { id: 'Daily_rent', label: 'الأجر المتفق عليه', type: 'number' }
         ],
