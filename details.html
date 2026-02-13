@@ -3,34 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سجل التفاصيل المالي v1.3.3</title>
+    <title> التفاصيل الماليه v1.3</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --taxi: #f1c40f; --success: #27ae60; --danger: #e74c3c; --dark: #222; }
-        body { font-family: 'Tajawal', sans-serif; background-color: #f4f4f4; margin: 0; padding: 15px; color: #333; }
-        .details-page { max-width: 1250px; margin: auto; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #000; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; color: #333; }
+        .details-page { max-width: 1250px; margin: auto; background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #000; }
         
         #toastBox { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; }
         .toast { background: #333; color: white; padding: 12px 25px; border-radius: 10px; font-weight: bold; border-right: 6px solid var(--taxi); margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
         .header-section { text-align: center; border-bottom: 4px solid var(--taxi); margin-bottom: 25px; padding-bottom: 10px; }
 
-        .filters-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: #fafafa; padding: 20px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 25px; }
+        .filters-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #fafafa; padding: 20px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 25px; }
         select { width: 100%; padding: 10px; border: 2px solid #ccc; border-radius: 8px; font-family: 'Tajawal'; cursor: pointer; font-weight: bold; }
 
-        .info-wrapper { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        @media (min-width: 768px) { .info-wrapper { flex-direction: row; } }
-        
+        .info-wrapper { display: flex; gap: 20px; margin-bottom: 30px; }
         .info-card { flex: 1; padding: 15px; border: 3px solid #000; border-radius: 15px; text-align: center; background: #fff; }
         .info-card.rev { color: var(--success); border-color: var(--success); }
         .info-card.exp { color: var(--danger); border-color: var(--danger); }
-        .info-card span { font-size: 1.6rem; font-weight: bold; display: block; }
+        .info-card span { font-size: 1.8rem; font-weight: bold; display: block; }
         
         /* كلاسات الصافي المالي الذكية */
         .net-positive { color: var(--success) !important; }
         .net-negative { color: var(--danger) !important; }
 
-        /* زر التحديث التفاعلي 3D */
+        /* أزرار التنقل التفاعلية (3D) */
         .btn-refresh {
             background: var(--success); color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; 
             font-weight: bold; width: 100%; transition: all 0.2s ease; position: relative; top: 0;
@@ -45,23 +43,21 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- الحل لمشكلة الهاتف (فوق بعض) والكمبيوتر (جنب بعض) --- */
-        .details-container { display: flex; flex-direction: column; gap: 20px; }
-        @media (min-width: 900px) {
-            .details-container { display: grid; grid-template-columns: 1fr 1fr; }
-        }
-
-        .table-section { background: #fff; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 2px solid; }
+        /* تنسيق الجداول الملونة */
+        .table-section { background: #fff; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; border: 2px solid; margin-bottom: 10px; }
         .section-rev { border-color: var(--success); }
         .section-exp { border-color: var(--danger); }
         .table-section h2 { margin: 0; padding: 12px; font-size: 1.1rem; text-align: center; color: #fff; }
         .section-rev h2 { background: var(--success); }
         .section-exp h2 { background: var(--danger); }
         
-        .scroll-table { max-height: 500px; overflow-y: auto; width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 400px; }
+        .scroll-table { max-height: 500px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
         th { position: sticky; top: 0; background: #f8f8f8; padding: 12px; border-bottom: 2px solid #ddd; z-index: 10; }
         td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; }
+
+        @media (max-width: 900px) { .details-container { grid-template-columns: 1fr; } .info-wrapper { flex-direction: column; } .details-container { display: block; } }
+        .details-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     </style>
 </head>
 <body>
@@ -70,13 +66,13 @@
 
 <div class="details-page">
     <div class="header-section">
-        <h1>سجل التفاصيل المالي v1.3.3</h1>
-        <p>عرض متجاوب للهاتف والكمبيوتر</p>
+        <h1> التفاصيل الماليه v1.3.0</h1>
+        <p>تفاصيل الايرادات و المصاريف خلال فتره زمنيه محدده</p>
     </div>
 
     <div class="filters-area">
         <div><label>📅 الشهر</label><select id="monthFilter" onchange="applyFilters()"></select></div>
-        <div><label>👤 المالك</label><select id="ownerFilter" onchange="applyFilters()"><option value="all">كل الملاك</option></select></div>
+        <div><label>👤 المالك</label><select id="ownerFilter" onchange="applyFilters()"><option value="all">جميع أصحاب السيارات</option></select></div>
         <div><label>👮 المسؤول</label><select id="inChargeFilter" onchange="applyFilters()"><option value="all">كل المسؤولين</option></select></div>
         <div style="display:flex; align-items:flex-end;">
             <button class="btn-refresh" id="refreshBtn" onclick="fetchData()">
@@ -87,14 +83,14 @@
     </div>
 
     <div class="info-wrapper">
-        <div class="info-card rev"><h3>إجمالي الإيرادات</h3><span id="sumRev">0.00</span></div>
-        <div class="info-card exp"><h3>إجمالي المصاريف (H)</h3><span id="sumExp">0.00</span></div>
+        <div class="info-card rev"><h3>مجموع الإيرادات</h3><span id="sumRev">0.00</span></div>
+        <div class="info-card exp"><h3>مجموع المصاريف </h3><span id="sumExp">0.00</span></div>
         <div class="info-card"><h3>الصافي المالي</h3><span id="sumNet">0.00</span></div>
     </div>
 
     <div class="details-container">
         <div class="table-section section-rev">
-            <h2>💰 سجل الإيرادات المفلتر</h2>
+            <h2>💰 سجل الإيرادات</h2>
             <div class="scroll-table">
                 <table>
                     <thead><tr><th>التاريخ</th><th>اللوحة</th><th>المبلغ</th><th>البيان</th></tr></thead>
@@ -104,10 +100,10 @@
         </div>
 
         <div class="table-section section-exp">
-            <h2>🛠️ سجل المصاريف المفلتر</h2>
+            <h2>🛠️ سجل المصاريف</h2>
             <div class="scroll-table">
                 <table>
-                    <thead><tr><th>التاريخ</th><th>اللوحة</th><th>المبلغ (H)</th><th>النوع والملاحظات</th></tr></thead>
+                    <thead><tr><th>التاريخ</th><th>اللوحة</th><th>المبلغ </th><th>النوع والملاحظات</th></tr></thead>
                     <tbody id="expDetails"></tbody>
                 </table>
             </div>
@@ -163,11 +159,60 @@
             masterData.expenses = (await e.json()).rows;
             popFilters(savedOwner);
             applyFilters();
-            showToast("تم تحديث البيانات");
+            showToast("تم التحديث بنجاح");
         } catch(err) { showToast("خطأ في الاتصال"); }
         finally { btn.disabled = false; txt.innerText = "تحديث البيانات 🔄"; spin.style.display = "none"; }
     }
 
     function popFilters(savedO) {
         const o = [...new Set(masterData.cars.map(x => String(x[2]||"").trim()))].filter(x=>x);
-        const i = [...new Set(master
+        const i = [...new Set(masterData.cars.map(x => String(x[3]||"").trim()))].filter(x=>x);
+        document.getElementById('ownerFilter').innerHTML = '<option value="all">كل الملاك</option>' + o.map(x=>`<option value="${x}">${x}</option>`).join('');
+        document.getElementById('inChargeFilter').innerHTML = '<option value="all">كل المسؤولين</option>' + i.map(x=>`<option value="${x}">${x}</option>`).join('');
+        if(o.includes(savedO)) document.getElementById('ownerFilter').value = savedO;
+    }
+
+    function applyFilters() {
+        const [y, m] = document.getElementById('monthFilter').value.split('-').map(Number);
+        const selO = document.getElementById('ownerFilter').value;
+        const selI = document.getElementById('inChargeFilter').value;
+
+        const activePlates = masterData.cars.filter(car => {
+            const matchO = (selO === 'all' || String(car[2]).trim() === selO);
+            const matchI = (selI === 'all' || String(car[3]).trim() === selI);
+            return matchO && matchI;
+        }).map(car => String(car[1]).trim());
+
+        let rHtml = ""; let rSum = 0;
+        masterData.revenues.forEach(r => {
+            const d = parseDate(r[1]); const p = String(r[2]).trim();
+            if(d && activePlates.includes(p) && (d.getMonth()+1 === m) && (d.getFullYear() === y)) {
+                const amt = parseFloat(r[5]) || 0; rSum += amt;
+                rHtml += `<tr><td>${d.toLocaleDateString('en-GB')}</td><td>${p}</td><td style="color:var(--success)">${amt.toFixed(2)}</td><td>${r[4]||'-'}</td></tr>`;
+            }
+        });
+
+        let eHtml = ""; let eSum = 0;
+        masterData.expenses.forEach(e => {
+            const d = parseDate(e[1]); const p = String(e[2]).trim();
+            if(d && activePlates.includes(p) && (d.getMonth()+1 === m) && (d.getFullYear() === y)) {
+                const amt = parseFloat(e[7]) || 0; eSum += amt;
+                eHtml += `<tr><td>${d.toLocaleDateString('en-GB')}</td><td>${p}</td><td style="color:var(--danger)">${amt.toFixed(2)}</td><td style="text-align:right">${e[6]||'-'} <br><small>(${e[9]||''})</small></td></tr>`;
+            }
+        });
+
+        document.getElementById('revDetails').innerHTML = rHtml || '<tr><td colspan="4">لا توجد سجلات</td></tr>';
+        document.getElementById('expDetails').innerHTML = eHtml || '<tr><td colspan="4">لا توجد سجلات</td></tr>';
+        document.getElementById('sumRev').innerText = rSum.toLocaleString('en-US',{minimumFractionDigits:2});
+        document.getElementById('sumExp').innerText = eSum.toLocaleString('en-US',{minimumFractionDigits:2});
+        
+        const net = rSum - eSum;
+        const netEl = document.getElementById('sumNet');
+        netEl.innerText = net.toLocaleString('en-US',{minimumFractionDigits:2});
+        netEl.className = net >= 0 ? 'net-positive' : 'net-negative';
+    }
+
+    window.onload = () => { genMonths(); fetchData(); };
+</script>
+</body>
+</html>
