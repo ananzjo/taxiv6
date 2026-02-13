@@ -18,10 +18,12 @@
         .filters-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #fafafa; padding: 20px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 25px; }
         select { width: 100%; padding: 10px; border: 2px solid #ccc; border-radius: 8px; font-family: 'Tajawal'; cursor: pointer; font-weight: bold; }
 
-        .info-wrapper { display: flex; gap: 20px; margin-bottom: 30px; }
-        .info-card { flex: 1; padding: 15px; border: 3px solid #000; border-radius: 15px; text-align: center; background: #fff; }
+        /* تعديل الـ Wrapper ليتناسب مع 4 بطاقات */
+        .info-wrapper { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .info-card { flex: 1; min-width: 150px; padding: 15px; border: 3px solid #000; border-radius: 15px; text-align: center; background: #fff; }
         .info-card.rev { color: var(--success); border-color: var(--success); }
         .info-card.exp { color: var(--danger); border-color: var(--danger); }
+        .info-card.days { color: #2980b9; border-color: #2980b9; } /* لون خاص لأيام العمل */
         .info-card span { font-size: 1.8rem; font-weight: bold; display: block; }
         
         .net-positive { color: var(--success) !important; }
@@ -53,18 +55,10 @@
         th { position: sticky; top: 0; background: #f8f8f8; padding: 12px; border-bottom: 2px solid #ddd; z-index: 10; }
         td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; font-weight: bold; }
 
-        /* --- تعديل الـ Responsive المطلوب --- */
+        /* التجاوب */
         .details-container { display: flex; flex-direction: column; gap: 20px; }
-        
-        @media (max-width: 900px) { 
-            .info-wrapper { flex-direction: column; } 
-        }
-
-        @media (min-width: 901px) {
-            .details-container { display: grid; grid-template-columns: 1fr 1fr; }
-        }
-        /* ------------------------------------- */
-
+        @media (max-width: 900px) { .info-wrapper { flex-direction: column; } }
+        @media (min-width: 901px) { .details-container { display: grid; grid-template-columns: 1fr 1fr; } }
     </style>
 </head>
 <body>
@@ -74,7 +68,7 @@
 <div class="details-page">
     <div class="header-section">
         <h1> التفاصيل الماليه v1.3.0</h1>
-        <p>تفاصيل الايرادات و المصاريف خلال فتره زمنيه محدده</p>
+        <p>تفاصيل الايرادات و المصاريف والتشغيل</p>
     </div>
 
     <div class="filters-area">
@@ -93,6 +87,7 @@
         <div class="info-card rev"><h3>مجموع الإيرادات</h3><span id="sumRev">0.00</span></div>
         <div class="info-card exp"><h3>مجموع المصاريف </h3><span id="sumExp">0.00</span></div>
         <div class="info-card"><h3>الصافي المالي</h3><span id="sumNet">0.00</span></div>
+        <div class="info-card days"><h3>أيام العمل (بدون جمعة)</h3><span id="sumDays">0</span></div>
     </div>
 
     <div class="details-container">
@@ -147,6 +142,24 @@
         }
     }
 
+    // دالة حساب أيام العمل الذكية
+    function calculateWorkDays(year, month) {
+        let count = 0;
+        const now = new Date();
+        const isCurrentMonth = (now.getFullYear() === year && (now.getMonth() + 1) === month);
+        
+        // إذا كان الشهر الحالي، نحسب حتى اليوم، وإلا نحسب لنهاية الشهر
+        const lastDay = isCurrentMonth ? now.getDate() : new Date(year, month, 0).getDate();
+        
+        for (let day = 1; day <= lastDay; day++) {
+            const dateToCheck = new Date(year, month - 1, day);
+            if (dateToCheck.getDay() !== 5) { // 5 هو الجمعة في JavaScript
+                count++;
+            }
+        }
+        return count;
+    }
+
     async function fetchData() {
         const btn = document.getElementById('refreshBtn');
         const txt = document.getElementById('btnText');
@@ -183,6 +196,10 @@
         const [y, m] = document.getElementById('monthFilter').value.split('-').map(Number);
         const selO = document.getElementById('ownerFilter').value;
         const selI = document.getElementById('inChargeFilter').value;
+
+        // حساب عدد أيام العمل وتحديث البطاقة الرابعة
+        const workDays = calculateWorkDays(y, m);
+        document.getElementById('sumDays').innerText = workDays;
 
         const activePlates = masterData.cars.filter(car => {
             const matchO = (selO === 'all' || String(car[2]).trim() === selO);
